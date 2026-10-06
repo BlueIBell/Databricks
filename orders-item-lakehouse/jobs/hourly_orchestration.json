@@ -1,0 +1,33 @@
+{
+  "name": "orders_item_lakehouse_hourly",
+  "schedule": {
+    "quartz_cron_expression": "0 0 * * * ?",
+    "timezone_id": "Europe/London",
+    "pause_status": "UNPAUSED"
+  },
+  "tasks": [
+    {
+      "task_key": "run_pipeline",
+      "pipeline_task": {
+        "pipeline_id": "<PIPELINE_ID_AFTER_CREATION>",
+        "full_refresh": false
+      }
+    },
+    {
+      "task_key": "refresh_dashboard",
+      "depends_on": [
+        { "task_key": "run_pipeline" }
+      ],
+      "sql_task": {
+        "warehouse_id": "<SQL_WAREHOUSE_ID>",
+        "dashboard": {
+          "dashboard_id": "<DASHBOARD_ID_AFTER_CREATION>"
+        }
+      }
+    }
+  ],
+  "email_notifications": {
+    "on_failure": ["sameera925@gmail.com"]
+  },
+  "max_concurrent_runs": 1
+}

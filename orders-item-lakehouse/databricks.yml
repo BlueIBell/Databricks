@@ -1,0 +1,64 @@
+bundle:
+  name: orders-item-lakehouse
+
+variables:
+  landing_path:
+    description: >-
+      Where Auto Loader reads landed order CSVs from. Path B (Free Edition-safe,
+      default) is a UC Volume. Path A would be an abfss:// URL once you're off
+      Free Edition — change only this value, no code changes.
+    default: /Volumes/orders_lake/landing/raw_orders/
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://<your-workspace-url>.cloud.databricks.com
+
+  prod:
+    mode: production
+    workspace:
+      host: https://<your-workspace-url>.cloud.databricks.com
+
+resources:
+  pipelines:
+    orders_item_lakehouse:
+      name: orders_item_lakehouse
+      catalog: orders_lake
+      schema: bronze
+      serverless: true
+      continuous: false
+      photon: true
+      channel: CURRENT
+      libraries:
+        - notebook:
+            path: ./notebooks/01_bronze_ingestion.py
+        - notebook:
+            path: ./notebooks/02_silver_transforms.py
+        - notebook:
+            path: ./notebooks/03_gold_aggregates.py
+      configuration:
+        orders.landing_path: ${var.landing_path}
+
+  jobs:
+    orders_item_lakehouse_hourly:
+      name: orders_item_lakehouse_hourly
+      schedule:
+        quartz_cron_expression: "0 0 * * * ?"
+        timezone_id: Europe/London
+        pause_status: UNPAUSED
+      tasks:
+        - task_key: run_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.orders_item_lakehouse.id}
+        - task_key: refresh_dashboard
+          depends_on:
+            - task_key: run_pipeline
+          dashboard_task:
+            dashboard_id: "<DASHBOARD_ID_AFTER_CREATION>"
+            warehouse_id: "<SQL_WAREHOUSE_ID>"
+      email_notifications:
+        on_failure:
+          - sameera925@gmail.com
+      max_concurrent_runs: 1

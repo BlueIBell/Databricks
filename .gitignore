@@ -1,0 +1,25 @@
+# Secrets
+.env
+*.pem
+.databrickscfg
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Databricks
+.databricks/
+.bundle/
+
+# Notebooks / IDE / OS
+.ipynb_checkpoints/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
